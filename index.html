@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Void Shop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      gap: 16px;
+      padding: 24px;
+    }
+    .logo { font-size: 48px; }
+    .title { font-size: 22px; font-weight: bold; color: #a78bfa; }
+    .status { font-size: 14px; color: #888; }
+    .dot { display: inline-block; animation: blink 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0; }
+      40% { opacity: 1; }
+    }
+    .open-btn {
+      display: none;
+      margin-top: 12px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      width: 100%;
+      max-width: 280px;
+    }
+    .err { color: #f87171; font-size: 13px; display: none; }
+    .retry-btn {
+      display: none;
+      margin-top: 8px;
+      padding: 10px 24px;
+      background: #374151;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">⚡</div>
+  <div class="title">Void Shop</div>
+  <div class="status" id="status">
+    Menghubungkan<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+  </div>
+  <div class="err" id="err">Gagal terhubung ke server.</div>
+  <a class="open-btn" id="openBtn">🚀 Buka Panel</a>
+  <button class="retry-btn" id="retryBtn" onclick="connect()">Coba Lagi</button>
+
+  <script>
+    const CONFIG_URL = 'https://raw.githubusercontent.com/apocalypse35674-jpg/update-auto/main/config.json';
+
+    function setStatus(msg) {
+      document.getElementById('status').textContent = msg;
+    }
+
+    function showButton(url) {
+      const btn = document.getElementById('openBtn');
+      btn.href = url;
+      btn.style.display = 'inline-block';
+      setStatus('Server ditemukan! Tap tombol untuk masuk.');
+    }
+
+    function showError() {
+      document.getElementById('err').style.display = 'block';
+      document.getElementById('retryBtn').style.display = 'inline-block';
+      setStatus('Koneksi gagal.');
+    }
+
+    async function connect() {
+      document.getElementById('err').style.display = 'none';
+      document.getElementById('retryBtn').style.display = 'none';
+      document.getElementById('openBtn').style.display = 'none';
+      document.getElementById('status').innerHTML =
+        'Menghubungkan<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+
+      try {
+        const res = await fetch(CONFIG_URL + '?t=' + Date.now());
+        if (!res.ok) throw new Error('Fetch gagal');
+        const data = await res.json();
+
+        const ip   = data.ip;
+        const port = data.port;
+        if (!ip || !port) throw new Error('Config tidak valid');
+
+        const target = 'http://' + ip + ':' + port;
+
+        setStatus('Server ditemukan, mengalihkan...');
+
+        // Coba auto redirect
+        window.location.href = target;
+
+        // Kalau 2.5 detik masih di sini berarti redirect diblokir, tampilkan tombol
+        setTimeout(() => {
+          showButton(target);
+        }, 2500);
+
+      } catch (e) {
+        showError();
+      }
+    }
+
+    connect();
+  </script>
+</body>
+</html>
