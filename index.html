@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Void Shop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      gap: 16px;
+    }
+    .logo { font-size: 48px; }
+    .title { font-size: 22px; font-weight: bold; color: #a78bfa; }
+    .status { font-size: 14px; color: #888; }
+    .dot {
+      display: inline-block;
+      animation: blink 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0; }
+      40% { opacity: 1; }
+    }
+    .err { color: #f87171; font-size: 13px; display: none; }
+    .retry-btn {
+      display: none;
+      margin-top: 8px;
+      padding: 10px 24px;
+      background: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">⚡</div>
+  <div class="title">Void Shop</div>
+  <div class="status" id="status">
+    Menghubungkan<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+  </div>
+  <div class="err" id="err">Gagal terhubung ke server. Coba lagi.</div>
+  <button class="retry-btn" id="retryBtn" onclick="connect()">Coba Lagi</button>
+
+  <script>
+    const CONFIG_URL = 'https://raw.githubusercontent.com/apocalypse35674-jpg/update-auto/main/config.json';
+
+    function setStatus(msg) {
+      document.getElementById('status').textContent = msg;
+    }
+
+    function showError() {
+      document.getElementById('err').style.display = 'block';
+      document.getElementById('retryBtn').style.display = 'inline-block';
+      setStatus('Koneksi gagal.');
+    }
+
+    async function connect() {
+      document.getElementById('err').style.display = 'none';
+      document.getElementById('retryBtn').style.display = 'none';
+      document.getElementById('status').innerHTML =
+        'Menghubungkan<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+
+      try {
+        const res = await fetch(CONFIG_URL + '?t=' + Date.now()); // cache buster
+        if (!res.ok) throw new Error('Fetch gagal');
+        const data = await res.json();
+
+        const ip   = data.ip;
+        const port = data.port;
+
+        if (!ip || !port) throw new Error('Config tidak valid');
+
+        setStatus('Server ditemukan, mengalihkan...');
+
+        // Coba HTTP dulu, kalau pakai HTTPS ganti di bawah
+        const target = `http://${ip}:${port}`;
+        window.location.replace(target);
+
+      } catch (e) {
+        showError();
+      }
+    }
+
+    // Jalankan otomatis saat halaman dibuka
+    connect();
+  </script>
+</body>
+</html>
