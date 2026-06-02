@@ -3,120 +3,481 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Void Shop</title>
+  <title>APOCALYPSE — Connect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #0a0a0a;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --red: #ff2a2a;
+      --red-dim: #8b0000;
+      --bg: #050505;
+      --surface: #0d0d0d;
+      --line: rgba(255,42,42,0.15);
+      --text: #c8c8c8;
+      --mono: 'Share Tech Mono', monospace;
+      --sans: 'Rajdhani', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow: hidden;
+    }
+
+    /* ── GRID BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,42,42,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,42,42,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── SCAN LINE ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── VIGNETTE ── */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ── CORNER DECO ── */
+    .corner {
+      position: fixed;
+      width: 60px;
+      height: 60px;
+      z-index: 3;
+    }
+    .corner::before, .corner::after {
+      content: '';
+      position: absolute;
+      background: var(--red);
+    }
+    .corner::before { width: 100%; height: 1px; }
+    .corner::after  { width: 1px; height: 100%; }
+    .corner.tl { top: 20px; left: 20px; }
+    .corner.tr { top: 20px; right: 20px; transform: scaleX(-1); }
+    .corner.bl { bottom: 20px; left: 20px; transform: scaleY(-1); }
+    .corner.br { bottom: 20px; right: 20px; transform: scale(-1); }
+
+    /* ── MAIN WRAP ── */
+    .wrap {
+      position: relative;
+      z-index: 10;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      text-align: center;
-      gap: 16px;
+      gap: 0;
       padding: 24px;
     }
-    .logo { font-size: 48px; }
-    .title { font-size: 22px; font-weight: bold; color: #a78bfa; }
-    .status { font-size: 14px; color: #888; }
-    .dot { display: inline-block; animation: blink 1.2s infinite; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0; }
-      40% { opacity: 1; }
+
+    /* ── TOP LABEL ── */
+    .top-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.2s forwards;
     }
-    .open-btn {
-      display: none;
-      margin-top: 12px;
-      padding: 14px 32px;
-      background: linear-gradient(135deg, #7c3aed, #a78bfa);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none;
+
+    /* ── LOGO / TITLE ── */
+    .brand {
+      font-family: var(--sans);
+      font-size: clamp(32px, 8vw, 56px);
+      font-weight: 700;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #fff;
+      line-height: 1;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.4s forwards;
+      position: relative;
+    }
+    .brand span { color: var(--red); }
+    .brand::before {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      color: var(--red);
+      clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+      transform: translateX(-3px);
+      opacity: 0;
+      animation: glitch 6s 2s infinite;
+    }
+
+    /* ── SUBTITLE ── */
+    .sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: #555;
+      margin-top: 10px;
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.6s forwards;
+    }
+
+    /* ── STATUS BOX ── */
+    .status-box {
       width: 100%;
-      max-width: 280px;
+      max-width: 340px;
+      border: 1px solid var(--line);
+      background: rgba(255,42,42,0.03);
+      padding: 20px 24px;
+      position: relative;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.8s forwards;
     }
-    .err { color: #f87171; font-size: 13px; display: none; }
+    .status-box::before {
+      content: 'STATUS';
+      position: absolute;
+      top: -7px;
+      left: 16px;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--red);
+      background: var(--bg);
+      padding: 0 6px;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .prog-wrap {
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .prog-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--red);
+      transition: width 0.3s ease;
+      box-shadow: 0 0 8px var(--red);
+    }
+
+    /* ── STATUS TEXT ── */
+    .status-line {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #777;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 18px;
+    }
+    .status-line .indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--red);
+      flex-shrink: 0;
+      animation: pulse 1.2s infinite;
+    }
+    .status-line.success .indicator {
+      background: #22c55e;
+      animation: none;
+      box-shadow: 0 0 6px #22c55e;
+    }
+    .status-line.error .indicator {
+      background: var(--red);
+      animation: none;
+    }
+    #statusText { color: #aaa; }
+
+    /* ── METRICS ROW (hanya MS) ── */
+    .metrics {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+    .metric {
+      text-align: center;
+      min-width: 80px;
+    }
+    .metric-val {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: #fff;
+      display: block;
+    }
+    .metric-key {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: #444;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* ── ERROR STATE ── */
+    .err-msg {
+      display: none;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--red);
+      margin-top: 10px;
+      letter-spacing: 1px;
+    }
+
+    /* ── AUTO RETRY COUNTER ── */
+    .retry-counter {
+      display: none;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #444;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* ── RETRY BUTTON ── */
     .retry-btn {
       display: none;
-      margin-top: 8px;
-      padding: 10px 24px;
-      background: #374151;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
+      margin-top: 14px;
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid var(--red-dim);
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+    .retry-btn:hover {
+      background: rgba(255,42,42,0.08);
+      border-color: var(--red);
+    }
+    .retry-btn:active {
+      background: rgba(255,42,42,0.15);
+    }
+
+    /* ── BOTTOM LABEL ── */
+    .bottom-label {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: #2a2a2a;
+      text-transform: uppercase;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    @keyframes glitch {
+      0%, 90%, 100% { opacity: 0; transform: translateX(0); }
+      91%  { opacity: 0.6; transform: translateX(-3px); }
+      92%  { opacity: 0;   transform: translateX(0); }
+      93%  { opacity: 0.4; transform: translateX(3px); }
+      94%  { opacity: 0;   transform: translateX(0); }
     }
   </style>
 </head>
 <body>
-  <div class="logo">⚡</div>
-  <div class="title">Void Shop</div>
-  <div class="status" id="status">
-    Menghubungkan<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+
+  <div class="vignette"></div>
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="wrap">
+
+    <div class="top-label">[ SYS::INIT — SERVER LOCATOR ]</div>
+
+    <div class="brand" data-text="APOCALYPSE">APOCA<span>LYPSE</span></div>
+    <div class="sub">CONNECT // SERVER GATEWAY</div>
+
+    <div class="status-box">
+      <div class="prog-wrap">
+        <div class="prog-bar" id="progBar"></div>
+      </div>
+
+      <div class="status-line" id="statusLine">
+        <span class="indicator"></span>
+        <span id="statusText">FETCHING CONFIG...</span>
+      </div>
+
+      <div class="metrics" id="metricsRow">
+        <div class="metric">
+          <span class="metric-val" id="mPing">—</span>
+          <span class="metric-key">MS</span>
+        </div>
+      </div>
+
+      <div class="err-msg" id="errMsg">// ERR: CONNECTION FAILED</div>
+      <div class="retry-counter" id="retryCounter"></div>
+      <button class="retry-btn" id="retryBtn" onclick="manualRetry()">↺ RETRY</button>
+    </div>
+
   </div>
-  <div class="err" id="err">Gagal terhubung ke server.</div>
-  <a class="open-btn" id="openBtn">🚀 Buka Panel</a>
-  <button class="retry-btn" id="retryBtn" onclick="connect()">Coba Lagi</button>
+
+  <div class="bottom-label">APOCALYPSE V7</div>
 
   <script>
     const CONFIG_URL = 'https://raw.githubusercontent.com/apocalypse35674-jpg/update-auto/main/config.json';
 
-    function setStatus(msg) {
-      document.getElementById('status').textContent = msg;
+    const progBar      = document.getElementById('progBar');
+    const statusLine   = document.getElementById('statusLine');
+    const statusText   = document.getElementById('statusText');
+    const errMsg       = document.getElementById('errMsg');
+    const retryBtn     = document.getElementById('retryBtn');
+    const retryCounter = document.getElementById('retryCounter');
+    const mPing        = document.getElementById('mPing');
+
+    let autoRetryTimer   = null;
+    let countdownTimer   = null;
+    let countdownSeconds = 0;
+    let isConnecting     = false;
+
+    function setProgress(pct) {
+      progBar.style.width = pct + '%';
     }
 
-    function showButton(url) {
-      const btn = document.getElementById('openBtn');
-      btn.href = url;
-      btn.style.display = 'inline-block';
-      setStatus('Server ditemukan! Tap tombol untuk masuk.');
+    function setStatus(txt, state) {
+      statusText.textContent = txt;
+      statusLine.className = 'status-line' + (state ? ' ' + state : '');
     }
 
     function showError() {
-      document.getElementById('err').style.display = 'block';
-      document.getElementById('retryBtn').style.display = 'inline-block';
-      setStatus('Koneksi gagal.');
+      setStatus('KONEKSI GAGAL', 'error');
+      setProgress(100);
+      progBar.style.background = '#ff2a2a';
+      errMsg.style.display = 'block';
+      retryBtn.style.display = 'block';
+      retryCounter.style.display = 'block';
+      isConnecting = false;
+      startAutoRetry();
+    }
+
+    function resetUI() {
+      progBar.style.background = 'var(--red)';
+      errMsg.style.display = 'none';
+      retryBtn.style.display = 'none';
+      retryCounter.style.display = 'none';
+      retryCounter.textContent = '';
+      mPing.textContent = '—';
+      statusLine.className = 'status-line';
+      setProgress(0);
+      clearAutoRetry();
+    }
+
+    function startAutoRetry() {
+      clearAutoRetry();
+      countdownSeconds = 5;
+      retryCounter.textContent = `// AUTO RETRY IN ${countdownSeconds}s`;
+
+      countdownTimer = setInterval(() => {
+        countdownSeconds--;
+        if (countdownSeconds <= 0) {
+          clearInterval(countdownTimer);
+          retryCounter.textContent = '// RETRYING...';
+          connect();
+        } else {
+          retryCounter.textContent = `// AUTO RETRY IN ${countdownSeconds}s`;
+        }
+      }, 1000);
+    }
+
+    function clearAutoRetry() {
+      if (autoRetryTimer)   { clearTimeout(autoRetryTimer);   autoRetryTimer = null; }
+      if (countdownTimer)   { clearInterval(countdownTimer);  countdownTimer = null; }
+    }
+
+    function manualRetry() {
+      clearAutoRetry();
+      connect();
     }
 
     async function connect() {
-      document.getElementById('err').style.display = 'none';
-      document.getElementById('retryBtn').style.display = 'none';
-      document.getElementById('openBtn').style.display = 'none';
-      document.getElementById('status').innerHTML =
-        'Menghubungkan<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>';
+      if (isConnecting) return;
+      isConnecting = true;
+      resetUI();
+
+      const t0 = Date.now();
 
       try {
+        setStatus('FETCHING CONFIG...', '');
+        setProgress(20);
+
         const res = await fetch(CONFIG_URL + '?t=' + Date.now());
-        if (!res.ok) throw new Error('Fetch gagal');
+        if (!res.ok) throw new Error('fetch failed');
         const data = await res.json();
 
         const ip   = data.ip;
         const port = data.port;
-        if (!ip || !port) throw new Error('Config tidak valid');
+        if (!ip || !port) throw new Error('invalid config');
+
+        setProgress(55);
+        setStatus('RESOLVING HOST...', '');
+        await new Promise(r => setTimeout(r, 500));
+
+        setProgress(80);
+        setStatus('ESTABLISHING LINK...', '');
+        await new Promise(r => setTimeout(r, 400));
+
+        const ping = Date.now() - t0;
+        mPing.textContent = ping + 'ms';
+        setProgress(100);
+        progBar.style.background = '#22c55e';
+        setStatus('CONNECTED — REDIRECTING', 'success');
 
         const target = 'http://' + ip + ':' + port;
 
-        setStatus('Server ditemukan, mengalihkan...');
-
-        // Coba auto redirect
-        window.location.href = target;
-
-        // Kalau 2.5 detik masih di sini berarti redirect diblokir, tampilkan tombol
         setTimeout(() => {
-          showButton(target);
-        }, 2500);
+          window.location.href = target;
+        }, 800);
 
       } catch (e) {
+        isConnecting = false;
         showError();
       }
     }
