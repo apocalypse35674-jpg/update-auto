@@ -437,67 +437,6 @@
       connect();
     }
 
-    function pingServer(ip, port) {
-      return new Promise((resolve) => {
-        const img = new Image();
-        const target = 'http://' + ip + ':' + port + '/favicon.ico?t=' + Date.now();
-        const timer = setTimeout(() => {
-          img.src = '';
-          resolve(false); // timeout = server mati
-        }, 5000);
-        img.onload = () => {
-          clearTimeout(timer);
-          resolve(true);
-        };
-        img.onerror = () => {
-          clearTimeout(timer);
-          // onerror tapi cepet = server hidup tapi no favicon (CORS/404)
-          // onerror lambat = kemungkinan mati, tapi kita anggap hidup
-          resolve(true);
-        };
-        img.src = target;
-      });
-    }
-
-    function checkServer(ip, port) {
-      return new Promise((resolve) => {
-        // Coba koneksi via iframe trick — timeout 6 detik
-        let done = false;
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.style.position = 'absolute';
-
-        const timer = setTimeout(() => {
-          if (!done) {
-            done = true;
-            document.body.removeChild(iframe);
-            resolve(false); // timeout = server benar2 mati
-          }
-        }, 6000);
-
-        iframe.onload = () => {
-          if (!done) {
-            done = true;
-            clearTimeout(timer);
-            try { document.body.removeChild(iframe); } catch(e) {}
-            resolve(true);
-          }
-        };
-
-        iframe.onerror = () => {
-          if (!done) {
-            done = true;
-            clearTimeout(timer);
-            try { document.body.removeChild(iframe); } catch(e) {}
-            resolve(false);
-          }
-        };
-
-        iframe.src = 'http://' + ip + ':' + port;
-        document.body.appendChild(iframe);
-      });
-    }
-
     async function connect() {
       if (isConnecting) return;
       isConnecting = true;
@@ -521,15 +460,9 @@
         setStatus('RESOLVING HOST...', '');
         await new Promise(r => setTimeout(r, 400));
 
-        setProgress(70);
-        setStatus('CHECKING SERVER...', '');
-
-        const alive = await checkServer(ip, port);
-        if (!alive) throw new Error('server unreachable');
-
-        setProgress(90);
+        setProgress(80);
         setStatus('ESTABLISHING LINK...', '');
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 400));
 
         const ping = Date.now() - t0;
         mPing.textContent = ping + 'ms';
@@ -544,10 +477,8 @@
 
       } catch (e) {
         isConnecting = false;
-        if (e.message === 'server unreachable') {
-          mPing.textContent = 'DOWN';
-          document.getElementById('mPing').style.color = '#ff2a2a';
-        }
+        mPing.textContent = 'ERR';
+        document.getElementById('mPing').style.color = '#ff2a2a';
         showError();
       }
     }
