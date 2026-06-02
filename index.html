@@ -437,6 +437,21 @@
       connect();
     }
 
+    async function pingServer(ip, port) {
+      const target = 'http://' + ip + ':' + port;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      try {
+        await fetch(target, { signal: controller.signal, mode: 'no-cors' });
+        clearTimeout(timeout);
+        return true;
+      } catch (e) {
+        clearTimeout(timeout);
+        if (e.name === 'AbortError') return false;
+        return true;
+      }
+    }
+
     async function connect() {
       if (isConnecting) return;
       isConnecting = true;
@@ -456,13 +471,19 @@
         const port = data.port;
         if (!ip || !port) throw new Error('invalid config');
 
-        setProgress(55);
+        setProgress(50);
         setStatus('RESOLVING HOST...', '');
-        await new Promise(r => setTimeout(r, 500));
-
-        setProgress(80);
-        setStatus('ESTABLISHING LINK...', '');
         await new Promise(r => setTimeout(r, 400));
+
+        setProgress(70);
+        setStatus('CHECKING SERVER...', '');
+
+        const alive = await pingServer(ip, port);
+        if (!alive) throw new Error('server unreachable');
+
+        setProgress(90);
+        setStatus('ESTABLISHING LINK...', '');
+        await new Promise(r => setTimeout(r, 300));
 
         const ping = Date.now() - t0;
         mPing.textContent = ping + 'ms';
@@ -471,13 +492,16 @@
         setStatus('CONNECTED — REDIRECTING', 'success');
 
         const target = 'http://' + ip + ':' + port;
-
         setTimeout(() => {
           window.location.href = target;
         }, 800);
 
       } catch (e) {
         isConnecting = false;
+        if (e.message === 'server unreachable') {
+          mPing.textContent = 'DOWN';
+          document.getElementById('mPing').style.color = '#ff2a2a';
+        }
         showError();
       }
     }
